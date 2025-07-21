@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ESP Sensor Dashboard</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #333;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin: 20px auto;
+      width: 300px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .value {
+      font-size: 2.5em;
+      color: #007BFF;
+    }
+    .label {
+      font-size: 1.1em;
+      margin-bottom: 8px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>ESP Sensor Dashboard</h1>
+
+  <div class="card">
+    <div class="label">Temperature</div>
+    <div id="temp" class="value">-- °C</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Humidity</div>
+    <div id="hum" class="value">-- %</div>
+  </div>
+
+  <div class="card">
+    <div class="label">LDR</div>
+    <div id="ldr" class="value">--</div>
+  </div>
+
+  <script>
+    const options = {
+      connectTimeout: 5000,
+      clientId: 'webclient_' + Math.random().toString(16).substr(2, 8),
+      clean: true
+    };
+
+    // Use Eclipse MQTT WebSocket Broker
+    const client = mqtt.connect('wss://mqtt.eclipseprojects.io/mqtt', options);
+
+    client.on('connect', () => {
+      console.log('✅ Connected to Eclipse MQTT broker');
+      client.subscribe('home/temp');
+      client.subscribe('home/hum');
+      client.subscribe('home/ldr');
+    });
+
+    client.on('error', (err) => {
+      console.error('❌ Connection error: ', err);
+      client.end();
+    });
+
+    client.on('message', (topic, payload) => {
+      const message = payload.toString();
+      console.log(`📩 ${topic}: ${message}`);
+
+      if (topic === 'home/temp') {
+        document.getElementById('temp').textContent = message + ' °C';
+      }
+      if (topic === 'home/hum') {
+        document.getElementById('hum').textContent = message + ' %';
+      }
+      if (topic === 'home/ldr') {
+        document.getElementById('ldr').textContent = message;
+      }
+    });
+  </script>
+</body>
+</html>
